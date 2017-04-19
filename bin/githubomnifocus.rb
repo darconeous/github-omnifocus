@@ -18,14 +18,14 @@ def get_opts
 	#YAML CONFIG EXAMPLE
 ---
 github:
-  username: ''
-  password: ''
+	username: ''
+	password: ''
 omnifocus:
-  context:  'Office'
-  project:  'GitHub'
-  flag: true
+	context:  'Office'
+	project:  'GitHub'
+	flag: true
 EOS
-  end
+	end
 
 	return Trollop::options do
 		banner ""
@@ -33,14 +33,14 @@ EOS
 		GitHub OmniFocus Sync Tool
 
 Usage:
-       ghofsync [options]
+			 ghofsync [options]
 
 KNOWN ISSUES:
-      * With long names you must use an equal sign ( i.e. --hostname=test-target-1 )
+			* With long names you must use an equal sign ( i.e. --hostname=test-target-1 )
 
 ---
 EOS
-  version 'ghofsync 1.1.0'
+	version 'ghofsync 1.1.0'
 		opt :username,  'github Username',        :type => :string,   :short => 'u', :required => false,   :default => config["github"]["username"]
 		opt :password,  'github Password',        :type => :string,   :short => 'p', :required => false,   :default => config["github"]["password"]
 		opt :oauth,  	  'github oauth token',      :type => :string,   :short => 'o', :required => false,   :default => config["github"]["oauth"]
@@ -58,7 +58,7 @@ def get_issues
 		client = Octokit::Client.new(:login => $opts[:username], :password => $opts[:password])
 		client.user.login
 	elsif $opts[:username] && $opts[:oauth]
-		client = Octokit::Client.new :access_token => auth[:oauth]
+		client = Octokit::Client.new :access_token => $opts[:oauth]
 		client.user.login
 	else
 		puts "No username and password or username and oauth token combo found!"
@@ -86,9 +86,10 @@ def add_task(omnifocus_document, new_task_properties)
 	# Check to see if there's already an OF Task with that name in the referenced Project
 	# If there is, just stop.
 	name   = new_task_properties["name"]
+	name   = name.slice(0..(name.index(':')+1))
 	#exists = proj.tasks.get.find { |t| t.name.get.force_encoding("UTF-8") == name }
 	# You can un-comment the line below and comment the line above if you want to search your entire OF document, instead of a specific project.
-	exists = omnifocus_document.flattened_tasks.get.find { |t| t.name.get.force_encoding("UTF-8") == name }
+	exists = omnifocus_document.flattened_tasks.get.find { |t| t.name.get.force_encoding("UTF-8").start_with?(name) }
 	return false if exists
 
 	# If there is a passed in OF context name, get the actual context object
@@ -109,10 +110,10 @@ def add_task(omnifocus_document, new_task_properties)
 	tprops[:context] = ctx if new_task_properties['context']
 
 	# You can uncomment this line and comment the one below if you want the tasks to end up in your Inbox instead of a specific Project
-	#  new_task = omnifocus_document.make(:new => :inbox_task, :with_properties => tprops)
+	new_task = omnifocus_document.make(:new => :inbox_task, :with_properties => tprops)
 
 	# Make a new Task in the Project
-	proj.make(:new => :task, :with_properties => tprops)
+	#proj.make(:new => :task, :with_properties => tprops)
 
 	puts "Created task " + tprops[:name]
 	return true
@@ -166,7 +167,7 @@ def mark_resolved_github_issues_as_complete_in_omnifocus (omnifocus_document)
 				client = Octokit::Client.new(:login => $opts[:username], :password => $opts[:password])
 				client.user.login
 			elsif $opts[:username] && $opts[:oauth]
-				client = Octokit::Client.new :access_token => auth[:oauth]
+				client = Octokit::Client.new :access_token => $opts[:oauth]
 				client.user.login
 			else
 				puts "No username and password or username and oauth token combo found!"
@@ -186,11 +187,11 @@ def mark_resolved_github_issues_as_complete_in_omnifocus (omnifocus_document)
 				# Check to see if the GitHub issue has been unassigned or assigned to someone else, if so delete it.
 				# It will be re-created if it is assigned back to you.
 				if ! issue.assignee
-					omnifocus_document.delete task
+					#omnifocus_document.delete task
 				else
 					assignee = issue.assignee.login.downcase
 					if assignee != $opts[:username].downcase
-						omnifocus_document.delete task
+						#omnifocus_document.delete task
 					end
 				end
 			end

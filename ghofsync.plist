@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-  <dict>
-    <key>Label</key>
-      <string>ghofsync</string>
-    <key>WorkingDirectory</key>
-      <string>/Users/devon/git/github-omnifocus/bin</string>
-	  <key>ProgramArguments</key>
-	  	<array>
-	  	  <string>/usr/bin/ruby</string>
-	  	  <string>/Users/devon/git/github-omnifocus/bin/githubomnifocus.rb</string>
-	  	</array>
-    <key>StartInterval</key>
-      <integer>300</integer>
-    <key>Debug</key>
-      <false/>
-  </dict>
+<dict>
+	<key>Debug</key>
+	<false/>
+	<key>Label</key>
+	<string>ghofsync</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/bin/ruby</string>
+		<string>/Users/rquattle/Projects/github-omnifocus/bin/githubomnifocus.rb</string>
+	</array>
+	<key>StartInterval</key>
+	<integer>300</integer>
+	<key>WorkingDirectory</key>
+	<string>/Users/rquattle/Projects/github-omnifocus/bin</string>
+</dict>
 </plist>
