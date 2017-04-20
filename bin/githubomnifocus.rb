@@ -57,11 +57,11 @@ def get_issues
 	if $opts[:username] && $opts[:password]
 		client = Octokit::Client.new(:login => $opts[:username], :password => $opts[:password])
 		client.user.login
-	elsif $opts[:username] && $opts[:oauth]
+	elsif $opts[:oauth]
 		client = Octokit::Client.new :access_token => $opts[:oauth]
 		client.user.login
 	else
-		puts "No username and password or username and oauth token combo found!"
+		puts "No username/password or oauth token found!"
 	end
 
 	client.list_issues.each do |issue|
@@ -70,6 +70,23 @@ def get_issues
 		issue_id = "#{project}-##{number}"
 
 		github_issues[issue_id] = issue
+		puts "Assigned " + issue_id
+	end
+
+	#client.paginate("issues", { :query => "q=is%3Aopen%20review-requested%3A#{$opts[:username]}"}).each do |issue|
+	#client.search_issues("is:open review-requested:#{$opts[:username]}").each do |issue|
+	#puts client.paginate("search/issues", { :q => "is:open review-requested:#{$opts[:username]}"})
+	#client.paginate("search/issues", { :q => "is:open review-requested:#{$opts[:username]}"}).each do |data|
+	client.search_issues("is:open review-requested:#{$opts[:username]}").each do |data|
+		if data[0] == :items
+			data[1].each do |issue|
+				number    = issue.number
+				project   = issue.repository_url.split("/").last
+				issue_id = "#{project}-##{number}"
+				github_issues[issue_id] = issue
+				puts "Review Requested " + issue_id
+			end
+		end
 	end
 	return github_issues
 end
@@ -133,10 +150,11 @@ def add_github_issues_to_omnifocus (omnifocus_document)
 
 		pr        = issue["pull_request"] && !issue["pull_request"]["diff_url"].nil?
 		number    = issue.number
-		project   = issue.repository.full_name.split("/").last
+		project   = issue.repository_url.split("/").last
 		issue_id = "#{project}-##{number}"
 		title     = "#{issue_id}: #{pr ? "[PR] " : ""}#{issue["title"]}"
-		url       = "https://github.com/#{issue.repository.full_name}/issues/#{number}"
+		url       = issue.html_url
+                #"https://github.com/#{issue.repository.full_name}/issues/#{number}"
 		note      = "#{url}\n\n#{issue["body"]}"
 
 		task_name = title
@@ -158,19 +176,18 @@ def mark_resolved_github_issues_as_complete_in_omnifocus (omnifocus_document)
 	# get tasks from the project
 	ctx = omnifocus_document.flattened_contexts[$opts[:context]]
 	ctx.tasks.get.find.each do |task|
-		if !task.completed.get && task.note.get.match('github')
-
+		if !task.completed.get && task.note.get.match(/https:\/\/github.com\/(.*)?\/issues\/(.*)/i)
 			note = task.note.get
-			repo, number = note.match(/https:\/\/github.com\/(.*)?\/issues\/(.*)/i).captures
+			repo, number = note.match(/https{0,1}:\/\/github.com\/(.*)?\/issues\/(.*)/i).captures
 
 			if $opts[:username] && $opts[:password]
 				client = Octokit::Client.new(:login => $opts[:username], :password => $opts[:password])
 				client.user.login
-			elsif $opts[:username] && $opts[:oauth]
+			elsif $opts[:oauth]
 				client = Octokit::Client.new :access_token => $opts[:oauth]
 				client.user.login
 			else
-				puts "No username and password or username and oauth token combo found!"
+				puts "No username/password or oauth token found!"
 			end
 
 			issue = client.issue(repo, number)
