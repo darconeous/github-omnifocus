@@ -176,9 +176,11 @@ def mark_resolved_github_issues_as_complete_in_omnifocus (omnifocus_document)
 	# get tasks from the project
 	ctx = omnifocus_document.flattened_contexts[$opts[:context]]
 	ctx.tasks.get.find.each do |task|
-		if !task.completed.get && task.note.get.match(/https:\/\/github.com\/(.*)?\/issues\/(.*)/i)
+		if !task.completed.get && task.note.get.lines.first.match(/https:\/\/github\.com\/.*\/(issues|pull)\/.*/i)
 			note = task.note.get
-			repo, number = note.match(/https{0,1}:\/\/github.com\/(.*)?\/issues\/(.*)/i).captures
+			repo, type, number = note.lines.first.match(/https:\/\/github\.com\/(.*)\/(issues|pull)\/(.*)/i).captures
+
+			puts "Analyzing " + type + " " + repo + "#" + number
 
 			if $opts[:username] && $opts[:password]
 				client = Octokit::Client.new(:login => $opts[:username], :password => $opts[:password])
@@ -192,7 +194,7 @@ def mark_resolved_github_issues_as_complete_in_omnifocus (omnifocus_document)
 
 			issue = client.issue(repo, number)
 			if issue != nil
-				if issue.state == 'closed'
+				if issue.state == 'closed' || issue.state == 'merged'
 					# if resolved, mark it as complete in OmniFocus
 					if task.completed.get != true
 						task.completed.set(true)
