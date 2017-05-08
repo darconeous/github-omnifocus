@@ -176,9 +176,10 @@ def mark_resolved_github_issues_as_complete_in_omnifocus (omnifocus_document)
 	# get tasks from the project
 	ctx = omnifocus_document.flattened_contexts[$opts[:context]]
 	ctx.tasks.get.find.each do |task|
-		if !task.completed.get && task.note.get.lines.first.match(/https:\/\/github\.com\/.*\/(issues|pull)\/.*/i)
+		note_first_line = task.note.get.lines.first
+		if !task.completed.get && note_first_line && note_first_line.match(/https:\/\/github\.com\/.*\/(issues|pull)\/.*/i)
 			note = task.note.get
-			repo, type, number = note.lines.first.match(/https:\/\/github\.com\/(.*)\/(issues|pull)\/(.*)/i).captures
+			repo, type, number = note_first_line.match(/https:\/\/github\.com\/(.*)\/(issues|pull)\/(.*)/i).captures
 
 			puts "Analyzing " + type + " " + repo + "#" + number
 
